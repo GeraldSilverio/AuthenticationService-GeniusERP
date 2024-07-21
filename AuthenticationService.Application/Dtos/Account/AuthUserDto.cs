@@ -17,7 +17,7 @@ namespace AuthenticationService.Application.Dtos.Account
         [JsonPropertyName("displayName")]
         public string? DisplayName { get; set; }
 
-        [JsonPropertyName("idToken")]
+        [JsonPropertyName("idToken ")]
         public string? IdToken { get; set; }
 
         [JsonPropertyName("registered")]
