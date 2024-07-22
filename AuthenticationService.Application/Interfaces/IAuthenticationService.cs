@@ -4,7 +4,8 @@ namespace AuthenticationService.Application.Interfaces
 {
     public interface IAuthenticationService
     {
-        Task<string> RegisterAsync(RegisterUserDto registerUser);
         Task<AuthUserDto> LoginAsync(LoginUserDto loginUserDto);
+        Task<string> RegisterAsync(RegisterUserDto registerUserDto);
+        Task<bool> ResetPassword(ResetPasswordDto resetPasswordDto);
     }
 }
