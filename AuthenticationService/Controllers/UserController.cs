@@ -16,5 +16,17 @@ namespace AuthenticationService.Controllers
 
             return response.Error != null ? BadRequest(response.Error) : Ok(response);
         }
+        [HttpPost("Register")]
+        public async Task<IActionResult> Register([FromBody] RegisterUserDto registerUserDto)
+        {
+            string response = await authenticationService.RegisterAsync(registerUserDto);
+            return string.IsNullOrEmpty(response) ? BadRequest() : Ok();
+        }
+        [HttpPost("ResetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        {
+            bool response = await authenticationService.ResetPassword(resetPasswordDto);
+            return response ? Ok() : BadRequest();
+        }
     }
 }
