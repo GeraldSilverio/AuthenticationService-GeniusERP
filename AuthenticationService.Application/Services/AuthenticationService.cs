@@ -44,7 +44,7 @@ namespace AuthenticationService.Application.Services
                     {
                         Code = 401,
                         Errors = null,
-                        Message = "You have to confirm your Email"
+                        Message = "Tu email no esta confirmado, por favor hazlo para poder usar la aplicacion."
                     };
                 }
                 return userResponse;

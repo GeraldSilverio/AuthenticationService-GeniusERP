@@ -1,4 +1,5 @@
 ﻿using AuthenticationService.Application.Interfaces;
+using AuthenticationService.Application.Services;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,6 +14,7 @@ namespace AuthenticationService.Application
         {
             #region ServicesDPI
             services.AddScoped<IAuthenticationService, Services.AuthenticationService>();
+            services.AddScoped<IRolesService, RolesService>();
             #endregion
 
             #region HttpClientFactory
