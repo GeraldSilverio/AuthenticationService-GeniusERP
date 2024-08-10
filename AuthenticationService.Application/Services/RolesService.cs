@@ -13,7 +13,7 @@ namespace AuthenticationService.Application.Services
         {
             try
             {
-                using OracleConnection connection = new OracleConnection(configuration.GetConnectionString("OracleConnection"));
+                using OracleConnection connection = new(configuration.GetConnectionString("OracleConnection"));
                 const string query = @"INSERT INTO C##GENIUS.ROLES(COD_ROL,NOMBRE,FECHA_ADICIONADO,ADICIONADO_POR,ES_ACTIVO)
                 VALUES(:COD_ROL,:NOMBRE,:FECHA_ADICIONADO,:ADICIONADO_POR,:ES_ACTIVO)";
 
@@ -45,7 +45,7 @@ namespace AuthenticationService.Application.Services
         {
             try
             {
-                using OracleConnection connection = new OracleConnection(configuration.GetConnectionString("OracleConnection"));
+                using OracleConnection connection = new(configuration.GetConnectionString("OracleConnection"));
                 const string query = "SELECT COD_ROL as CodeRol, NOMBRE as Name FROM C##GENIUS.ROLES WHERE ES_ACTIVO = 1";
                 var roles = await connection.QueryAsync<RolDto>(query);
 
@@ -61,7 +61,6 @@ namespace AuthenticationService.Application.Services
             {
                 throw new NotImplementedException();
             }
-
         }
     }
 }

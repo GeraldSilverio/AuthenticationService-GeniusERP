@@ -15,6 +15,8 @@ namespace AuthenticationService.Application
             #region ServicesDPI
             services.AddScoped<IAuthenticationService, Services.AuthenticationService>();
             services.AddScoped<IRolesService, RolesService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IUserRoleService, UserRoleService>();
             #endregion
 
             #region HttpClientFactory

@@ -2,7 +2,7 @@
 {
     public class CreateRolDto
     {
-        public string CodeRol { get; set; }
-        public string Name { get; set; }
+        public string? CodeRol { get; set; }
+        public string? Name { get; set; }
     }
 }

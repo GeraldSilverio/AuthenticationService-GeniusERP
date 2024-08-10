@@ -1,5 +1,6 @@
 ﻿using AuthenticationService.Application.Dtos.Account;
 using AuthenticationService.Application.Interfaces;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,8 +20,10 @@ namespace AuthenticationService.Controllers
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto registerUserDto)
         {
-            string response = await authenticationService.RegisterAsync(registerUserDto);
-            return string.IsNullOrEmpty(response) ? BadRequest() : Ok();
+            
+   
+            var response = await authenticationService.RegisterAsync(registerUserDto);
+            return string.IsNullOrEmpty(response.Data) ? BadRequest() : Ok();
         }
         [HttpPost("ResetPassword")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
