@@ -6,6 +6,7 @@ using FirebaseAdmin.Auth;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text;
 
 namespace AuthenticationService.Application.Services
@@ -26,10 +27,13 @@ namespace AuthenticationService.Application.Services
         }
 
         #region LoginUser
-        public async Task<AuthUserDto> LoginAsync(LoginUserDto loginUserDto)
+        public async Task<Response<AuthUserDto>> LoginAsync(LoginUserDto loginUserDto)
         {
+
             try
             {
+                string userId = await _userService.GetUserAsync(loginUserDto.Email);
+                if (string.IsNullOrEmpty(userId)) return new Response<AuthUserDto>(new List<string> { "Usuario/Contraseña invalidos" }, 400, new AuthUserDto());
                 HttpClient httpClient = _httpClientFactory.CreateClient("GoogleAuth");
 
                 var payload = new
@@ -43,7 +47,7 @@ namespace AuthenticationService.Application.Services
 
                 HttpContent body = new StringContent(user, Encoding.UTF8, "application/json");
 
-                HttpResponseMessage authResponse = await httpClient.PostAsync($"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={_configuration["GoogleAPI:ApiKey"]}", body);
+                HttpResponseMessage authResponse = await httpClient.PostAsync($"{httpClient.BaseAddress}{_configuration["GoogleAPI:ApiKey"]}", body);
 
                 AuthUserDto? userResponse = await authResponse.Content.ReadFromJsonAsync<AuthUserDto>();
 
@@ -51,14 +55,35 @@ namespace AuthenticationService.Application.Services
                 {
                     bool isEmailConfirm = await IsEmailConfirm(userResponse.LocalId);
 
-                    if (!isEmailConfirm) userResponse.Error = new Response.Error
+                    if (!isEmailConfirm) new Response<AuthUserDto>(new List<string> { "El correo electronico no ha sido confirmador" }, 400, new AuthUserDto());
+
+                    List<GetUserRole> roles = await _userRoleService.GetUserRolesAsync(userId);
+                    if (roles.Count > 0)
                     {
-                        Code = 401,
-                        Errors = null,
-                        Message = "Tu email no esta confirmado, por favor hazlo para poder usar la aplicacion."
-                    };
+                        // Initialize a list to hold role names
+                        List<string> roleList = new();
+
+                        // Add roles to the list
+                        foreach (var role in roles)
+                        {
+                            roleList.Add(role.RolId);
+                        }
+
+                        // You can add additional roles if needed
+                        roleList.Add("Client");
+
+                        // Create the claims dictionary with a single key for roles and the list of roles
+                        Dictionary<string, object> claims = new()
+    {
+        { "roles", roleList }
+    };
+
+                        userResponse.IdToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userResponse.LocalId, claims);
+                        return new Response<AuthUserDto>(userResponse, 201);
+                    }
+                    return new Response<AuthUserDto>(new List<string> { "El usuario no contiene roles asignados, favor asignarle alguno" }, 400, new AuthUserDto());
                 }
-                return userResponse;
+                return new Response<AuthUserDto>(new List<string> { "Ocurrio un error inesperado, favor revisar los logs" }, 400, new AuthUserDto());
 
             }
             catch (Exception ex)
@@ -87,6 +112,7 @@ namespace AuthenticationService.Application.Services
                 if (userCreated != null)
                 {
                     await ExecuteAfterRegister(userCreated, registerUserDto);
+                    return new Response<string>("Usuario creado con exito", 201);
                 }
                 return null;
 
@@ -99,15 +125,16 @@ namespace AuthenticationService.Application.Services
 
         private async Task ExecuteAfterRegister(UserRecord user, RegisterUserDto registerUserDto)
         {
-            AuthUserDto token = await LoginAsync(new LoginUserDto { Email = user.Email, Password = registerUserDto.Password });
-            _ = Task.Run(async () => await SendEmailConfirmation(token.IdToken));
+            Response<AuthUserDto> login = await LoginAsync(new LoginUserDto { Email = user.Email, Password = registerUserDto.Password });
+            _ = Task.Run(async () => await SendEmailConfirmation(login.Data.IdToken));
             string userId = await _userService.CreateUserAsync(registerUserDto, user.Uid);
 
             //Agregar los roles de ese usuario.
             CreateUserRole userRole = new()
             {
-                RolesId = new List<string> { registerUserDto.RolId },
-                UserId = userId
+                RolesId = registerUserDto.RolesId,
+                UserId = userId,
+                CreatedBy = registerUserDto.CreateBy,
             };
 
             await _userRoleService.CreateUserRoleAsync(userRole);

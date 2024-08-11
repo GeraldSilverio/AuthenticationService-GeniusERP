@@ -39,7 +39,7 @@ namespace AuthenticationService.Application.Services
                     COD_PAIS = user.CountryId,
                     COD_NEGOCIO = user.BusinessId,
                     COD_TIPO_IDENTIFICACION = user.TypeIdentificationId,
-                    ADICIONADO_POR = "AppWeb",
+                    ADICIONADO_POR = user.CreateBy,
                     FECHA_ADICIONADO = DateTime.Now,
                     ES_ACTIVO = 1
                 };
@@ -52,6 +52,21 @@ namespace AuthenticationService.Application.Services
                 int result = await connection.ExecuteAsync(insertUserQuery, parameters);
                 return result != 0 ? parameters.COD_USUARIO : null;
 
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException(ex.Message, ex);
+            }
+        }
+
+        public async Task<string> GetUserAsync(string email)
+        {
+            try
+            {
+                using OracleConnection connection = new(_connectionString);
+                const string selectQuery = @"SELECT COD_USUARIO FROM C##GENIUS.USUARIOS WHERE CORREO_ELECTRONICO = :email";
+                string? result = await connection.QueryFirstOrDefaultAsync<string>(selectQuery, new { email });
+                return result;
             }
             catch (Exception ex)
             {

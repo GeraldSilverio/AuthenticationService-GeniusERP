@@ -9,13 +9,14 @@
         public string? Email { get; set; }
         public string? Identification { get; set; }
         public string? PhotoUrl { get; set; }
-        public char Gender {  get; set; }
+        public char Gender { get; set; }
         public string? Address { get; set; }
         public string? ZipCode { get; set; }
-        public int CountryId {  get; set; }
-        public int TypeIdentificationId {  get; set; }
-        public string? BusinessId {  get; set; }
+        public int CountryId { get; set; }
+        public int TypeIdentificationId { get; set; }
+        public string? BusinessId { get; set; }
         public string? Password { get; set; }
-        public string? RolId { get; set; }
+        public List<string>? RolesId { get; set; }
+        public string? CreateBy { get; set; }
     }
 }

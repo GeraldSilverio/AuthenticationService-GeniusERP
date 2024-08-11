@@ -5,5 +5,6 @@ namespace AuthenticationService.Application.Interfaces
     public interface IUserService
     {
         Task<string> CreateUserAsync(RegisterUserDto user,string fireBaseCode);
+        Task<string> GetUserAsync(string email);
     }
 }

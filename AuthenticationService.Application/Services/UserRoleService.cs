@@ -29,6 +29,9 @@ namespace AuthenticationService.Application.Services
                     {
                         COD_USUARIO = createUserRole.UserId,
                         COD_ROL = rolId,
+                        ADICIONADO_POR = createUserRole.CreatedBy,
+                        FECHA_ADICIONADO = DateTime.Now,
+                        ES_ACTIVO = 1
                     };
                     await connection.ExecuteAsync(insertQuery, insertModel);
                 }
@@ -36,6 +39,23 @@ namespace AuthenticationService.Application.Services
 
             }
             //AQUI IRA EL SERILOG, PARA GUARDAR UN LOG EN CASO DE QUE FALLE LA APLICACION.
+            catch (Exception ex)
+            {
+                throw new ApplicationException(ex.Message, ex);
+            }
+        }
+
+        public async Task<List<GetUserRole>> GetUserRolesAsync(string userId)
+        {
+            try
+            {
+
+                using OracleConnection connection = new(_connectionString);
+                const string selectQuery = @"SELECT R.NOMBRE AS RolId FROM C##GENIUS.USUARIOROLES UR
+                INNER JOIN C##GENIUS.ROLES R ON R.COD_ROL = UR.COD_ROL WHERE COD_USUARIO = :userId";
+                var userRoles = await connection.QueryAsync<GetUserRole>(selectQuery, new {userId });
+                return userRoles.ToList();
+            }
             catch (Exception ex)
             {
                 throw new ApplicationException(ex.Message, ex);
