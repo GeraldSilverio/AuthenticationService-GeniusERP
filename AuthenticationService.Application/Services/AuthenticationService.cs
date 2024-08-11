@@ -2,6 +2,7 @@
 using AuthenticationService.Application.Dtos.UserRole;
 using AuthenticationService.Application.Interfaces;
 using AuthenticationService.Application.Response;
+using AuthenticationService.Application.Services;
 using FirebaseAdmin.Auth;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -29,13 +30,18 @@ namespace AuthenticationService.Application.Services
         #region LoginUser
         public async Task<Response<AuthUserDto>> LoginAsync(LoginUserDto loginUserDto)
         {
-
             try
             {
+                // Verificar si el usuario existe
                 string userId = await _userService.GetUserAsync(loginUserDto.Email);
-                if (string.IsNullOrEmpty(userId)) return new Response<AuthUserDto>(new List<string> { "Usuario/Contraseña invalidos" }, 400, new AuthUserDto());
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return new Response<AuthUserDto>(new List<string> { "Usuario/Contraseña inválidos" }, 400, new AuthUserDto());
+                }
+
                 HttpClient httpClient = _httpClientFactory.CreateClient("GoogleAuth");
 
+                // Preparar el payload para la solicitud de autenticación
                 var payload = new
                 {
                     email = loginUserDto.Email,
@@ -44,54 +50,63 @@ namespace AuthenticationService.Application.Services
                 };
 
                 string user = JsonConvert.SerializeObject(payload);
-
                 HttpContent body = new StringContent(user, Encoding.UTF8, "application/json");
 
+                // Realizar la solicitud de autenticación
                 HttpResponseMessage authResponse = await httpClient.PostAsync($"{httpClient.BaseAddress}{_configuration["GoogleAPI:ApiKey"]}", body);
 
+                // Leer la respuesta
                 AuthUserDto? userResponse = await authResponse.Content.ReadFromJsonAsync<AuthUserDto>();
 
-                if (authResponse.IsSuccessStatusCode && userResponse.Error == null)
+                if (authResponse.IsSuccessStatusCode && userResponse?.Error == null)
                 {
                     bool isEmailConfirm = await IsEmailConfirm(userResponse.LocalId);
 
-                    if (!isEmailConfirm) new Response<AuthUserDto>(new List<string> { "El correo electronico no ha sido confirmador" }, 400, new AuthUserDto());
-
-                    List<GetUserRole> roles = await _userRoleService.GetUserRolesAsync(userId);
-                    if (roles.Count > 0)
+                    if (!isEmailConfirm)
                     {
-                        // Initialize a list to hold role names
-                        List<string> roleList = new();
-
-                        // Add roles to the list
-                        foreach (var role in roles)
-                        {
-                            roleList.Add(role.RolId);
-                        }
-
-                        // You can add additional roles if needed
-                        roleList.Add("Client");
-
-                        // Create the claims dictionary with a single key for roles and the list of roles
-                        Dictionary<string, object> claims = new()
-    {
-        { "roles", roleList }
-    };
-
-                        userResponse.IdToken = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userResponse.LocalId, claims);
-                        return new Response<AuthUserDto>(userResponse, 201);
+                        return new Response<AuthUserDto>(new List<string> { "El correo electrónico no ha sido confirmado" }, 400, new AuthUserDto());
                     }
-                    return new Response<AuthUserDto>(new List<string> { "El usuario no contiene roles asignados, favor asignarle alguno" }, 400, new AuthUserDto());
-                }
-                return new Response<AuthUserDto>(new List<string> { "Ocurrio un error inesperado, favor revisar los logs" }, 400, new AuthUserDto());
 
+                    userResponse.IdToken = await GetCustomTokenAsync(userId);
+
+                    return new Response<AuthUserDto>(userResponse, 201);
+                }
+
+                return new Response<AuthUserDto>(new List<string> { "Ocurrió un problema al autenticarse, favor revisar los logs." }, 400, null);
             }
             catch (Exception ex)
             {
-                throw new ApplicationException(ex.Message, ex);
+                // Manejo de errores
+                return new Response<AuthUserDto>(new List<string> { $"Error interno: {ex.Message}" }, 500, null);
             }
         }
 
+        private async Task<string> GetCustomTokenAsync(string userId)
+        {
+            try
+            {
+                List<GetUserRole> roles = await _userRoleService.GetUserRolesAsync(userId);
+                if (roles.Count > 0)
+                {
+                    List<string> roleList = roles.Select(role => role.RolId).ToList();
+
+                    Dictionary<string, object> claims = new()
+                     {
+                            { "roles", roleList }
+                     };
+
+                    string token = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userId, claims);
+                    return token;
+                }
+
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                // Manejo de errores
+                throw new ApplicationException($"Error al generar el token personalizado: {ex.Message}", ex);
+            }
+        }
         #endregion
 
         #region RegisterByWeb
@@ -138,9 +153,8 @@ namespace AuthenticationService.Application.Services
             };
 
             await _userRoleService.CreateUserRoleAsync(userRole);
-            #endregion
-
         }
+        #endregion
 
         #region SendEmailConfirmation
         private async Task SendEmailConfirmation(string token)
