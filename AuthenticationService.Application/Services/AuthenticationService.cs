@@ -2,12 +2,10 @@
 using AuthenticationService.Application.Dtos.UserRole;
 using AuthenticationService.Application.Interfaces;
 using AuthenticationService.Application.Response;
-using AuthenticationService.Application.Services;
 using FirebaseAdmin.Auth;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Net.Http.Json;
-using System.Security.Claims;
 using System.Text;
 
 namespace AuthenticationService.Application.Services

@@ -6,5 +6,7 @@ namespace AuthenticationService.Application.Interfaces
     {
         Task<bool> CreateUserRoleAsync(CreateUserRole createUserRole);
         Task<List<GetUserRole>> GetUserRolesAsync(string userId);
+
+        Task<bool> DeleteUserRoleAsync(DeleteUserRole deleteUserRole);
     }
 }

@@ -45,14 +45,40 @@ namespace AuthenticationService.Application.Services
             }
         }
 
+        public async Task<bool> DeleteUserRoleAsync(DeleteUserRole deleteUserRole)
+        {
+            {
+                try
+                {
+                    using OracleConnection connection = new(_connectionString);
+                    const string updateQuery = @"UPDATE C##GENIUS.USUARIOROLES SET ES_ACTIVO = 0 AND MODIFICADO_POR = :modifiedBy 
+                    AND FECHA_MODIFICADO = :dateModified WHERE COD_ROL = :codeRol AND COD_USUARIO = :codeUser";
+
+                    var parameters = new
+                    {
+                        modifiedBy = deleteUserRole.ModifiedBy,
+                        codeUser = deleteUserRole.UserId,
+                        codeRol = deleteUserRole.RoleId,
+                        dateModified = DateTime.Now
+                    };
+
+                    var isSuccess = await connection.ExecuteAsync(updateQuery,parameters);
+                    return isSuccess == 1;
+                }
+                catch (Exception ex)
+                {
+                    throw new ApplicationException(ex.Message, ex);
+                }
+            }
+        }
+
         public async Task<List<GetUserRole>> GetUserRolesAsync(string userId)
         {
             try
             {
-
                 using OracleConnection connection = new(_connectionString);
                 const string selectQuery = @"SELECT R.NOMBRE AS RolId FROM C##GENIUS.USUARIOROLES UR
-                INNER JOIN C##GENIUS.ROLES R ON R.COD_ROL = UR.COD_ROL WHERE COD_USUARIO = :userId";
+                INNER JOIN C##GENIUS.ROLES R ON R.COD_ROL = UR.COD_ROL WHERE COD_USUARIO = :userId AND UR.ES_ACTIVO = 1";
                 var userRoles = await connection.QueryAsync<GetUserRole>(selectQuery, new {userId });
                 return userRoles.ToList();
             }
