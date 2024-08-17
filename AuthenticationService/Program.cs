@@ -1,4 +1,5 @@
 using AuthenticationService.Application;
+using AuthenticationService.Security;
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -7,6 +8,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddApplicationLayer(builder.Configuration);
+builder.Services.AddSecurityLayer();
+
 
 var app = builder.Build();
 

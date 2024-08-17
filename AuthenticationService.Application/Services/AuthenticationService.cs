@@ -2,6 +2,7 @@
 using AuthenticationService.Application.Dtos.UserRole;
 using AuthenticationService.Application.Interfaces;
 using AuthenticationService.Application.Response;
+using AuthenticationService.Domain.Models;
 using FirebaseAdmin.Auth;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -16,13 +17,15 @@ namespace AuthenticationService.Application.Services
         private readonly IConfiguration _configuration;
         private readonly IUserService _userService;
         private readonly IUserRoleService _userRoleService;
+        private readonly IJwtService _jwtService;
 
-        public AuthenticationService(IHttpClientFactory httpClientFactory, IConfiguration configuration, IUserService userService, IUserRoleService userRoleService)
+        public AuthenticationService(IHttpClientFactory httpClientFactory, IConfiguration configuration, IUserService userService, IUserRoleService userRoleService, IJwtService jwtService)
         {
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
             _userService = userService;
             _userRoleService = userRoleService;
+            _jwtService = jwtService;
         }
 
         #region LoginUser
@@ -31,12 +34,11 @@ namespace AuthenticationService.Application.Services
             try
             {
                 // Verificar si el usuario existe
-                string userId = await _userService.GetUserAsync(loginUserDto.Email);
-                if (string.IsNullOrEmpty(userId))
+                User user = await _userService.GetUserAsync(loginUserDto.Email);
+                if (user == null)
                 {
                     return new Response<AuthUserDto>(new List<string> { "Usuario/Contraseña inválidos" }, 400, new AuthUserDto());
                 }
-
                 HttpClient httpClient = _httpClientFactory.CreateClient("GoogleAuth");
 
                 // Preparar el payload para la solicitud de autenticación
@@ -46,10 +48,8 @@ namespace AuthenticationService.Application.Services
                     password = loginUserDto.Password,
                     returnSecureToken = true
                 };
-
-                string user = JsonConvert.SerializeObject(payload);
-                HttpContent body = new StringContent(user, Encoding.UTF8, "application/json");
-
+                string request = JsonConvert.SerializeObject(payload);
+                HttpContent body = new StringContent(request, Encoding.UTF8, "application/json");
                 // Realizar la solicitud de autenticación
                 HttpResponseMessage authResponse = await httpClient.PostAsync($"{httpClient.BaseAddress}{_configuration["GoogleAPI:ApiKey"]}", body);
 
@@ -65,44 +65,25 @@ namespace AuthenticationService.Application.Services
                         return new Response<AuthUserDto>(new List<string> { "El correo electrónico no ha sido confirmado" }, 400, new AuthUserDto());
                     }
 
-                    userResponse.IdToken = await GetCustomTokenAsync(userId);
-
+                    #region Asignando al usuario sus valores de base de datos
+                    userResponse.Business = user.Business;
+                    userResponse.BusinessId = user.BusinessId;
+                    userResponse.Address = user.Address;
+                    userResponse.Country = user.Country;
+                    userResponse.CountryId = user.CountryId;
+                    userResponse.Identification = user.Identification;
+                    userResponse.Name = user.Name;
+                    userResponse.LastName = user.LastName;
+                    userResponse.IdToken = await _jwtService.GetCustomTokenAsync(userResponse, user.UserId);
+                    #endregion
                     return new Response<AuthUserDto>(userResponse, 201);
                 }
-
                 return new Response<AuthUserDto>(new List<string> { "Ocurrió un problema al autenticarse, favor revisar los logs." }, 400, null);
             }
             catch (Exception ex)
             {
                 // Manejo de errores
                 return new Response<AuthUserDto>(new List<string> { $"Error interno: {ex.Message}" }, 500, null);
-            }
-        }
-
-        private async Task<string> GetCustomTokenAsync(string userId)
-        {
-            try
-            {
-                List<GetUserRole> roles = await _userRoleService.GetUserRolesAsync(userId);
-                if (roles.Count > 0)
-                {
-                    List<string> roleList = roles.Select(role => role.RolId).ToList();
-
-                    Dictionary<string, object> claims = new()
-                     {
-                            { "roles", roleList }
-                     };
-
-                    string token = await FirebaseAuth.DefaultInstance.CreateCustomTokenAsync(userId, claims);
-                    return token;
-                }
-
-                return string.Empty;
-            }
-            catch (Exception ex)
-            {
-                // Manejo de errores
-                throw new ApplicationException($"Error al generar el token personalizado: {ex.Message}", ex);
             }
         }
         #endregion

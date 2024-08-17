@@ -1,5 +1,6 @@
 ﻿using AuthenticationService.Application.Dtos.Account;
 using AuthenticationService.Application.Interfaces;
+using AuthenticationService.Domain.Models;
 using Dapper;
 using FirebaseAdmin.Messaging;
 using FluentValidation;
@@ -59,13 +60,18 @@ namespace AuthenticationService.Application.Services
             }
         }
 
-        public async Task<string> GetUserAsync(string email)
+        public async Task<User> GetUserAsync(string email)
         {
             try
             {
                 using OracleConnection connection = new(_connectionString);
-                const string selectQuery = @"SELECT COD_USUARIO FROM C##GENIUS.USUARIOS WHERE CORREO_ELECTRONICO = :email";
-                string? result = await connection.QueryFirstOrDefaultAsync<string>(selectQuery, new { email });
+                const string selectQuery = @"SELECT U.COD_USUARIO AS UserId,U.NOMBRES AS Name,U.APELLIDOS AS LastName,U.IDENTIFICACION AS Identification,N.NOMBRE AS Business,P.NOMBRE AS Country,
+                U.DIRECCION AS Address,U.COD_PAIS AS CountryId,U.COD_NEGOCIO BusinessId,U.COD_FIREBASE AS FirebaseId
+                FROM C##GENIUS.USUARIOS U
+                INNER JOIN C##GENIUS.NEGOCIOS N ON U.COD_NEGOCIO  = N.COD_NEGOCIO
+                INNER JOIN C##GENIUS.PAISES P ON U.COD_PAIS = P.COD_PAIS
+                WHERE U.CORREO_ELECTRONICO  = :email";
+                User? result = await connection.QueryFirstOrDefaultAsync<User>(selectQuery, new { email });
                 return result;
             }
             catch (Exception ex)

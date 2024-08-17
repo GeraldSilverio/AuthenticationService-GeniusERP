@@ -1,10 +1,12 @@
-﻿using AuthenticationService.Application.Interfaces;
+﻿using AuthenticationService.Application.Handler;
+using AuthenticationService.Application.Interfaces;
 using AuthenticationService.Application.Services;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using IAuthenticationService = AuthenticationService.Application.Interfaces.IAuthenticationService;
 
 namespace AuthenticationService.Application
 {
@@ -17,6 +19,7 @@ namespace AuthenticationService.Application
             services.AddScoped<IRolesService, RolesService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IUserRoleService, UserRoleService>();
+            services.AddScoped<IJwtService, JwtService>();
             #endregion
 
             #region HttpClientFactory
@@ -31,17 +34,6 @@ namespace AuthenticationService.Application
                     httpClient.BaseAddress = new Uri(baseAddress);
                 }
             });
-
-            #endregion
-
-            #region Security
-            services.AddAuthentication()
-                .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, jwtOptions =>
-                {
-                    jwtOptions.Authority = configuration["GoogleAPI:ValidIssuer"];
-                    jwtOptions.Audience = configuration["GoogleAPI:Audience"];
-                    jwtOptions.TokenValidationParameters.ValidIssuer = configuration["GoogleAPI:ValidIssuer"];
-                });
 
             #endregion
 

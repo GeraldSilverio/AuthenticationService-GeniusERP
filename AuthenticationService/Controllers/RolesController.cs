@@ -1,5 +1,6 @@
 ﻿using AuthenticationService.Application.Dtos.Roles;
 using AuthenticationService.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuthenticationService.Controllers
@@ -8,6 +9,7 @@ namespace AuthenticationService.Controllers
     [ApiController]
     public class RolesController(IRolesService rolesService) : ControllerBase
     {
+        [Authorize(AuthenticationSchemes = "Firebase",Roles = "Vendedor")]
         [HttpGet]
         public async Task<IActionResult> GetRoles()
         {
