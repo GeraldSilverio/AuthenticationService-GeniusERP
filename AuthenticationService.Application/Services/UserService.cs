@@ -2,8 +2,6 @@
 using AuthenticationService.Application.Interfaces;
 using AuthenticationService.Domain.Models;
 using Dapper;
-using FirebaseAdmin.Messaging;
-using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Oracle.ManagedDataAccess.Client;
 

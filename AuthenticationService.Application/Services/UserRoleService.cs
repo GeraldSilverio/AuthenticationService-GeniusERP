@@ -62,7 +62,7 @@ namespace AuthenticationService.Application.Services
                         dateModified = DateTime.Now
                     };
 
-                    var isSuccess = await connection.ExecuteAsync(updateQuery,parameters);
+                    var isSuccess = await connection.ExecuteAsync(updateQuery, parameters);
                     return isSuccess == 1;
                 }
                 catch (Exception ex)
@@ -79,7 +79,7 @@ namespace AuthenticationService.Application.Services
                 using OracleConnection connection = new(_connectionString);
                 const string selectQuery = @"SELECT R.NOMBRE AS RolId FROM C##GENIUS.USUARIOROLES UR
                 INNER JOIN C##GENIUS.ROLES R ON R.COD_ROL = UR.COD_ROL WHERE COD_USUARIO = :userId AND UR.ES_ACTIVO = 1";
-                var userRoles = await connection.QueryAsync<GetUserRole>(selectQuery, new {userId });
+                var userRoles = await connection.QueryAsync<GetUserRole>(selectQuery, new { userId });
                 return userRoles.ToList();
             }
             catch (Exception ex)

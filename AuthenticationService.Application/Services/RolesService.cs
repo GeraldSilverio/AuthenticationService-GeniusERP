@@ -29,7 +29,7 @@ namespace AuthenticationService.Application.Services
                 int result = await connection.ExecuteAsync(query, parameters);
                 if (result == 0)
                 {
-                    return new Response<CreateRolDto>(new List<string> { "No se pudo crear el rol deseado" }, 400, createRolDto);
+                    return new Response<CreateRolDto>(new List<string> { "No se pudo crear el rol deseado" }, 400);
                 }
 
                 createRolDto.CodeRol = parameters.COD_ROL;
@@ -37,7 +37,7 @@ namespace AuthenticationService.Application.Services
             }
             catch (Exception ex)
             {
-                return new Response<CreateRolDto>(new List<string> { "No se pudo crear el rol deseado, favor revisar los LOGS.", ex.Message }, 400, createRolDto);
+                return new Response<CreateRolDto>(new List<string> { "No se pudo crear el rol deseado, favor revisar los LOGS.", ex.Message }, 400);
             }
         }
 
@@ -54,7 +54,7 @@ namespace AuthenticationService.Application.Services
                     return new Response<List<RolDto>>(roles.ToList(), 200);
                 }
 
-                return new Response<List<RolDto>>(new List<string> { "No se encontraron roles en el sistema" }, 400, roles.ToList());
+                return new Response<List<RolDto>>(new List<string> { "No se encontraron roles en el sistema" }, 400);
 
             }
             catch (Exception ex)

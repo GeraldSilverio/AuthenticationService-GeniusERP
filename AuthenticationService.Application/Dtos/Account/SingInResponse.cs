@@ -2,7 +2,7 @@
 
 namespace AuthenticationService.Application.Dtos.Account
 {
-    public record SingInResponse
+    public class SingInResponse
     {
         [JsonPropertyName("idToken")]
         public string? IdToken { get; set; }

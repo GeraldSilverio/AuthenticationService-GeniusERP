@@ -4,6 +4,7 @@ using AuthenticationService.Application.Interfaces;
 using FirebaseAdmin.Auth;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
+using AuthenticationService.Application.Dtos.Account;
 
 namespace AuthenticationService.Application.Services
 {
@@ -36,7 +37,7 @@ namespace AuthenticationService.Application.Services
                     response.EnsureSuccessStatusCode();
 
                     string responseBody = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<SignInResponse>(responseBody);
+                    var result = JsonSerializer.Deserialize<SingInResponse>(responseBody);
 
                     return result.IdToken;
                 }

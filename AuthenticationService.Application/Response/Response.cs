@@ -17,7 +17,6 @@ namespace AuthenticationService.Application.Response
         public Response(T data,int code)
         {
             Code = code;
-            Errors = null;
             Data = data;
             Success = true;
         }
@@ -27,12 +26,11 @@ namespace AuthenticationService.Application.Response
         /// <param name="errors"></param>
         /// <param name="code"></param>
         /// <param name="data"></param>
-        public Response(List<string> errors,int code,T data)
+        public Response(List<string> errors,int code)
         {
             Code = code;
             Errors = errors;
             Success = false;
-            Data = data;
         }
     }
 }

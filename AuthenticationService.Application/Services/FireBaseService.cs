@@ -6,12 +6,13 @@ using AuthenticationService.Domain.Models;
 using FirebaseAdmin.Auth;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 
 namespace AuthenticationService.Application.Services
 {
-    public class AuthenticationService : IAuthenticationService
+    public class FireBaseService : IFireBaseService
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
@@ -19,7 +20,7 @@ namespace AuthenticationService.Application.Services
         private readonly IUserRoleService _userRoleService;
         private readonly IJwtService _jwtService;
 
-        public AuthenticationService(IHttpClientFactory httpClientFactory, IConfiguration configuration, IUserService userService, IUserRoleService userRoleService, IJwtService jwtService)
+        public FireBaseService(IHttpClientFactory httpClientFactory, IConfiguration configuration, IUserService userService, IUserRoleService userRoleService, IJwtService jwtService)
         {
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
@@ -37,32 +38,18 @@ namespace AuthenticationService.Application.Services
                 User user = await _userService.GetUserAsync(loginUserDto.Email);
                 if (user == null)
                 {
-                    return new Response<AuthUserDto>(new List<string> { "Usuario/Contraseña inválidos" }, 400, new AuthUserDto());
+                    return new Response<AuthUserDto>(new List<string> { "Usuario/Contraseña inválidos" }, 400);
                 }
-                HttpClient httpClient = _httpClientFactory.CreateClient("GoogleAuth");
 
-                // Preparar el payload para la solicitud de autenticación
-                var payload = new
-                {
-                    email = loginUserDto.Email,
-                    password = loginUserDto.Password,
-                    returnSecureToken = true
-                };
-                string request = JsonConvert.SerializeObject(payload);
-                HttpContent body = new StringContent(request, Encoding.UTF8, "application/json");
-                // Realizar la solicitud de autenticación
-                HttpResponseMessage authResponse = await httpClient.PostAsync($"{httpClient.BaseAddress}{_configuration["GoogleAPI:ApiKey"]}", body);
+                AuthUserDto userResponse = await SendLoginRequest(loginUserDto.Email, loginUserDto.Password);
 
-                // Leer la respuesta
-                AuthUserDto? userResponse = await authResponse.Content.ReadFromJsonAsync<AuthUserDto>();
-
-                if (authResponse.IsSuccessStatusCode && userResponse?.Error == null)
+                if (userResponse != null)
                 {
                     bool isEmailConfirm = await IsEmailConfirm(userResponse.LocalId);
 
                     if (!isEmailConfirm)
                     {
-                        return new Response<AuthUserDto>(new List<string> { "El correo electrónico no ha sido confirmado" }, 400, new AuthUserDto());
+                        return new Response<AuthUserDto>(new List<string> { "El correo electrónico no ha sido confirmado" }, 400);
                     }
 
                     #region Asignando al usuario sus valores de base de datos
@@ -76,15 +63,44 @@ namespace AuthenticationService.Application.Services
                     userResponse.LastName = user.LastName;
                     userResponse.IdToken = await _jwtService.GetCustomTokenAsync(userResponse, user.UserId);
                     #endregion
+
                     return new Response<AuthUserDto>(userResponse, 201);
                 }
-                return new Response<AuthUserDto>(new List<string> { "Ocurrió un problema al autenticarse, favor revisar los logs." }, 400, null);
+                return new Response<AuthUserDto>(new List<string> { "Ocurrió un problema al autenticarse, favor revisar los logs." }, 400);
             }
             catch (Exception ex)
             {
                 // Manejo de errores
-                return new Response<AuthUserDto>(new List<string> { $"Error interno: {ex.Message}" }, 500, null);
+                return new Response<AuthUserDto>(new List<string> { $"Error interno: {ex.Message}" }, 500);
             }
+        }
+
+        private async Task<AuthUserDto> SendLoginRequest(string email, string password)
+        {
+            HttpClient httpClient = _httpClientFactory.CreateClient("GoogleAuth");
+
+            // Preparar el payload para la solicitud de autenticación
+            var payload = new
+            {
+                email = email,
+                password = password,
+                returnSecureToken = true
+            };
+            string request = JsonConvert.SerializeObject(payload);
+            HttpContent body = new StringContent(request, Encoding.UTF8, "application/json");
+            // Realizar la solicitud de autenticación
+            HttpResponseMessage authResponse = await httpClient.PostAsync($"{httpClient.BaseAddress}{_configuration["GoogleAPI:ApiKey"]}", body);
+
+            // Leer la respuesta
+            AuthUserDto? userResponse = await authResponse.Content.ReadFromJsonAsync<AuthUserDto>();
+
+            if (authResponse.IsSuccessStatusCode && userResponse?.Error == null)
+            {
+                return userResponse;
+            }
+
+            return null;
+
         }
         #endregion
 
@@ -119,8 +135,8 @@ namespace AuthenticationService.Application.Services
 
         private async Task ExecuteAfterRegister(UserRecord user, RegisterUserDto registerUserDto)
         {
-            Response<AuthUserDto> login = await LoginAsync(new LoginUserDto { Email = user.Email, Password = registerUserDto.Password });
-            _ = Task.Run(async () => await SendEmailConfirmation(login.Data.IdToken));
+            AuthUserDto login = await SendLoginRequest(user.Email, registerUserDto.Password);
+            _ = Task.Run(async () => await SendEmailConfirmation(login.IdToken));
             string userId = await _userService.CreateUserAsync(registerUserDto, user.Uid);
 
             //Agregar los roles de ese usuario.

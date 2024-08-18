@@ -1,12 +1,9 @@
-﻿using AuthenticationService.Application.Handler;
-using AuthenticationService.Application.Interfaces;
+﻿using AuthenticationService.Application.Interfaces;
 using AuthenticationService.Application.Services;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using IAuthenticationService = AuthenticationService.Application.Interfaces.IAuthenticationService;
 
 namespace AuthenticationService.Application
 {
@@ -15,9 +12,9 @@ namespace AuthenticationService.Application
         public static void AddApplicationLayer(this IServiceCollection services, IConfiguration configuration)
         {
             #region ServicesDPI
-            services.AddScoped<IAuthenticationService, Services.AuthenticationService>();
-            services.AddScoped<IRolesService, RolesService>();
+            services.AddScoped<IFireBaseService, FireBaseService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRolesService, RolesService>();
             services.AddScoped<IUserRoleService, UserRoleService>();
             services.AddScoped<IJwtService, JwtService>();
             #endregion
