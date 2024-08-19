@@ -6,28 +6,18 @@ using AuthenticationService.Domain.Models;
 using FirebaseAdmin.Auth;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 
 namespace AuthenticationService.Application.Services
 {
-    public class FireBaseService : IFireBaseService
+    public class FireBaseService(IHttpClientFactory httpClientFactory, IConfiguration configuration, IUserService userService, IUserRoleService userRoleService, IJwtService jwtService,IValidationService<LoginUserDto> loginValidation ) : IFireBaseService
     {
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IConfiguration _configuration;
-        private readonly IUserService _userService;
-        private readonly IUserRoleService _userRoleService;
-        private readonly IJwtService _jwtService;
-
-        public FireBaseService(IHttpClientFactory httpClientFactory, IConfiguration configuration, IUserService userService, IUserRoleService userRoleService, IJwtService jwtService)
-        {
-            _httpClientFactory = httpClientFactory;
-            _configuration = configuration;
-            _userService = userService;
-            _userRoleService = userRoleService;
-            _jwtService = jwtService;
-        }
+        private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+        private readonly IConfiguration _configuration = configuration;
+        private readonly IUserService _userService = userService;
+        private readonly IUserRoleService _userRoleService = userRoleService;
+        private readonly IJwtService _jwtService = jwtService;
 
         #region LoginUser
         public async Task<Response<AuthUserDto>> LoginAsync(LoginUserDto loginUserDto)

@@ -10,6 +10,9 @@ namespace AuthenticationService.Controllers
     public class UserController(IFireBaseService fireBaseService) : ControllerBase
     {
         [HttpPost("Login")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [Produces<LoginUserDto>]
         public async Task<IActionResult> Login([FromBody] LoginUserDto loginUserDto)
         {
             Response<AuthUserDto> response = await fireBaseService.LoginAsync(loginUserDto);

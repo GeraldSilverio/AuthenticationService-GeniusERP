@@ -1,6 +1,9 @@
-﻿using AuthenticationService.Application.Interfaces;
+﻿using AuthenticationService.Application.Dtos.Account;
+using AuthenticationService.Application.Interfaces;
 using AuthenticationService.Application.Services;
+using AuthenticationService.Application.Validations;
 using FirebaseAdmin;
+using FluentValidation;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +20,8 @@ namespace AuthenticationService.Application
             services.AddScoped<IRolesService, RolesService>();
             services.AddScoped<IUserRoleService, UserRoleService>();
             services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped(typeof(IValidationService<>), typeof(ValidationService<>));
+            services.AddSingleton<IValidator<LoginUserDto>, LoginValidation>();
             #endregion
 
             #region HttpClientFactory

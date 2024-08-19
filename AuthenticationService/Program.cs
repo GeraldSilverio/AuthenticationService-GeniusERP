@@ -1,4 +1,5 @@
 using AuthenticationService.Application;
+using AuthenticationService.Application.Middleware.ValidationMiddleware;
 using AuthenticationService.Security;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +24,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
+ app.UseMiddleware<ValidationMiddleware>();
 app.MapControllers();
 
 app.Run();
