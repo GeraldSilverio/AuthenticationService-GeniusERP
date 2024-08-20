@@ -1,7 +1,5 @@
 ﻿using AuthenticationService.Api.Entities;
-using AuthenticationService.Application.Dtos.Roles;
 using AuthenticationService.Application.Interfaces;
-using AuthenticationService.Application.Response;
 using Dapper;
 using Oracle.ManagedDataAccess.Client;
 

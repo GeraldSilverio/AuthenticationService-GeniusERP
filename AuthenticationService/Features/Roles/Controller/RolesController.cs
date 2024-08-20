@@ -1,5 +1,4 @@
 ﻿using AuthenticationService.Api.Features.Roles.Request;
-using AuthenticationService.Application.Dtos.Roles;
 using AuthenticationService.Application.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
