@@ -1,10 +1,13 @@
-﻿using AuthenticationService.Application.Response;
+﻿using AuthenticationService.Api.Results;
 using FluentValidation;
 using MediatR;
 
 namespace AuthenticationService.Application.Validations
 {
-    public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, Response<TResponse>>
+    public class ValidationBehavior<TRequest, TResponse>
+        : IPipelineBehavior<TRequest, Result<TResponse>>
+        where TRequest : IRequest<TResponse>
+        where TResponse : Result<TResponse>
     {
         private readonly IValidator<TRequest> _validator;
 
@@ -13,7 +16,7 @@ namespace AuthenticationService.Application.Validations
             _validator = validator;
         }
 
-        public async Task<Response<TResponse>> Handle(TRequest request, RequestHandlerDelegate<Response<TResponse>> next, CancellationToken cancellationToken)
+        public async Task<Result<TResponse>> Handle(TRequest request, RequestHandlerDelegate<Result<TResponse>> next, CancellationToken cancellationToken)
         {
             var validationResult = await _validator.ValidateAsync(request);
             if (!validationResult.IsValid)
@@ -23,7 +26,7 @@ namespace AuthenticationService.Application.Validations
                 {
                     errors.Add($"{error.PropertyName}:{error.ErrorMessage}");
                 }
-                return new Response<TResponse>(errors, 400);
+                return new Result<TResponse>(errors, 400);
             }
             return await next();
         }

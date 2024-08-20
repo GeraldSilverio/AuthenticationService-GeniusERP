@@ -1,10 +1,12 @@
-﻿namespace AuthenticationService.Application.Response
+﻿namespace AuthenticationService.Api.Results
 {
-    public class Response<T> 
+    public class Result<T> 
     {
-        public T Data { get; set; }
+        public T? Data { get; set; }
         public bool Success { get; set; }
         public List<string>? Errors { get; set; }
+
+        public Exception? Exception { get; set; }   
         public int Code { get; set; }
 
         /// <summary>
@@ -12,7 +14,7 @@
         /// </summary>
         /// <param name="data"></param>
         /// <param name="code"></param>
-        public Response(T data,int code)
+        public Result(T data,int code)
         {
             Code = code;
             Data = data;
@@ -24,11 +26,17 @@
         /// <param name="errors"></param>
         /// <param name="code"></param>
         /// <param name="data"></param>
-        public Response(List<string> errors,int code)
+        public Result(List<string> errors,int code)
         {
             Code = code;
             Errors = errors;
             Success = false;
+        }
+
+        public Result(Exception exception)
+        {
+            Code = 500;
+            Exception = exception;
         }
     }
 }

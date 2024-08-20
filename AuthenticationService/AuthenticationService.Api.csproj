@@ -19,4 +19,8 @@
     <ProjectReference Include="..\AuthenticationService.Security\AuthenticationService.Security.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Swagger\" />
+  </ItemGroup>
+
 </Project>
