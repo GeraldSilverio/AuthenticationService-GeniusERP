@@ -1,6 +1,6 @@
-﻿using AuthenticationService.Application.Interfaces;
-using AuthenticationService.Application.Response;
+﻿using AuthenticationService.Api.Interfaces;
 using FluentValidation;
+using FluentValidation.Results;
 
 namespace AuthenticationService.Application.Services
 {
@@ -8,22 +8,22 @@ namespace AuthenticationService.Application.Services
     {
         private readonly IValidator<T> _validator = validator;
 
-        public Response<T> Validate(T response)
+        public List<string> Validate(T response)
         {
             try
             {
                 var result = _validator.Validate(response);
                 if (!result.IsValid)
                 {
-                    List<string> errors = new List<string>();
-                    foreach (var error in result.Errors)
+                    List<string> errors = [];
+                    foreach (ValidationFailure error in result.Errors)
                     {
                         errors.Add($"{error.PropertyName}:{error.ErrorMessage}");
                     }
 
-                    return new Response<T>(errors, 400);
+                    return errors;
                 }
-                return null;
+                return [];
             }
             catch (Exception ex)
             {

@@ -16,10 +16,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AuthenticationService.Application\AuthenticationService.Application.csproj" />
-    <ProjectReference Include="..\AuthenticationService.Security\AuthenticationService.Security.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Features\Roles\Query\" />
+    <Folder Include="Features\User\Interface\" />
+    <Folder Include="Features\User\Query\" />
+    <Folder Include="Features\User\Repository\" />
     <Folder Include="Swagger\" />
   </ItemGroup>
 
