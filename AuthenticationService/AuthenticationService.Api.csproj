@@ -19,11 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Roles\Query\" />
-    <Folder Include="Features\User\Interface\" />
-    <Folder Include="Features\User\Query\" />
-    <Folder Include="Features\User\Repository\" />
-    <Folder Include="Swagger\" />
+    <Folder Include="Roles\Query\" />
+    <Folder Include="User\Validations\" />
   </ItemGroup>
 
 </Project>

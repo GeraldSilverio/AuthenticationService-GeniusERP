@@ -1,73 +1,52 @@
-using AuthenticationService.Api.Features.Roles.Request;
-using AuthenticationService.Api.Features.Roles.Validations;
-using AuthenticationService.Api.Features.User.Command;
-using AuthenticationService.Api.Interfaces;
-using AuthenticationService.Application.Interfaces;
+using AuthenticationService.Api.Roles.Interface;
+using AuthenticationService.Api.Roles.Repository;
+using AuthenticationService.Api.Roles.Request;
+using AuthenticationService.Api.Roles.Validations;
+using AuthenticationService.Api.User.Repositories;
+using AuthenticationService.Api.UserRole.Repository;
 using AuthenticationService.Application.Services;
-using AuthenticationService.Application.Validations;
+using FirebaseAdmin;
 using FluentValidation;
+using Google.Apis.Auth.OAuth2;
 using MediatR;
-internal class Program
+var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+
+builder.Services.AddSingleton<IValidator<CreateRoleCommand>, CreateRolCommandValidation>();
+builder.Services.AddSingleton<IRoleRepository, RolRepository>();
+builder.Services.AddSingleton<IUserRoleRepository, UserRoleRepository>();
+builder.Services.AddSingleton<IUserRepository, UserRepository>();
+
+builder.Services.AddMediatR(C =>
+
+C.RegisterServicesFromAssemblyContaining<Program>()
+
+);
+
+builder.Services.AddSingleton(FirebaseApp.Create(new AppOptions
 {
-    private static void Main(string[] args)
-    {
-        var builder = WebApplication.CreateBuilder(args);
-
-        #region HttpClientFactory
-
-        builder.Services.AddHttpClient("GoogleAuth", (sp, httpClient) =>
-        {
-            var configuration = sp.GetRequiredService<IConfiguration>();
-
-            string? baseAddress = configuration["GoogleAPI:UrlAuth"];
-            if (!string.IsNullOrEmpty(baseAddress))
-            {
-                httpClient.BaseAddress = new Uri(baseAddress);
-            }
-        });
-
-        #endregion
-
-        builder.Services.AddControllers();
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
-        //builder.Services.AddApplicationLayer(builder.Configuration);
-
-        builder.Services.AddSingleton<IValidator<CreateRoleCommand>, CreateRolCommandValidation>();
-        builder.Services.AddSingleton<IValidator<LoginUserCommand>, LoginCommandValidation>();
-
-        //builder.Services.AddMediatR(c =>
-        //c.RegisterServicesFromAssemblyContaining<Program>()
-        //.AddBehavior<IPipelineBehavior<CreateRoleCommand, Result<Rol>>>()
-        //.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>))
-        //);
+    Credential = GoogleCredential.FromFile("FireBase.json")
+}));
 
 
-        builder.Services.AddSingleton<IRoleRepository, RolRepository>();
+var app = builder.Build();
 
-        builder.Services.AddSingleton(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-
-        builder.Services.AddMediatR(C =>
-
-        C.RegisterServicesFromAssemblyContaining<Program>()
-        .AddBehavior(typeof(IValidationService<>), typeof(ValidationService<>))
-        );
-        builder.Services.AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
-        var app = builder.Build();
-
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
-
-        app.UseHttpsRedirection();
-        app.UseAuthentication();
-        app.UseAuthorization();
-        app.MapControllers();
-
-        app.Run();
-    }
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+app.Run();
