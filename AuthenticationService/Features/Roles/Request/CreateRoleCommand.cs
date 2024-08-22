@@ -20,7 +20,6 @@ namespace AuthenticationService.Api.Features.Roles.Request
 
         public async Task<Result<Rol>> Handle(CreateRoleCommand request, CancellationToken cancellationToken)
         {
-
             try
             {
                 Rol rol = new()
